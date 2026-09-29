@@ -1,0 +1,47 @@
+@startuml
+package "Abstraction Side" {
+    abstract class CosmeticOrder {
+        # supplier: CosmeticSupplier
+        + CosmeticOrder(supplier: CosmeticSupplier)
+        + {abstract} checkout(customerId: String, items: List<String>, totalAmount: double, category: CosmeticCategory): OrderFulfillmentResult
+    }
+    class StandardCosmeticOrder {
+        + checkout(...): OrderFulfillmentResult
+    }
+    class VIPBeautyBoxOrder {
+        + checkout(...): OrderFulfillmentResult
+    }
+    CosmeticOrder <|-- StandardCosmeticOrder
+    CosmeticOrder <|-- VIPBeautyBoxOrder
+}
+
+package "Implementor Side" {
+    interface CosmeticSupplier {
+        + processOrder(payload: OrderPayload): OrderFulfillmentResult
+    }
+    class InternalWarehouseSupplier
+    class PartnerRetailSupplier
+    class LegacySupplierAdapter {
+        - legacyApi: LegacyBrandB2BApi
+    }
+    CosmeticSupplier <|.. InternalWarehouseSupplier
+    CosmeticSupplier <|.. PartnerRetailSupplier
+    CosmeticSupplier <|.. LegacySupplierAdapter
+}
+
+package "Legacy External API" {
+    class LegacyBrandB2BApi {
+        + executeBatchSupplyRequest(rawItemCodes: String[], amountInCents: int, clientCode: String, isPriority: boolean): int
+    }
+    class LegacyB2BConnectionException
+}
+
+class DynamicSupplierSelector {
+    + selectSupplier(category: CosmeticCategory, customerId: String): CosmeticSupplier
+}
+
+CosmeticOrder o--> CosmeticSupplier : "Bridge"
+LegacySupplierAdapter --> LegacyBrandB2BApi : "Adapts"
+LegacyBrandB2BApi ..> LegacyB2BConnectionException : "throws"
+DynamicSupplierSelector ..> CosmeticSupplier : "creates"
+@enduml
